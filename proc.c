@@ -258,6 +258,50 @@ wait(int *status)
   }
 }
 
+int waitpid (int pid, int* status, int options)
+{
+  struct proc *p;
+  int havekids, zpid;
+
+  acquire(&ptable.lock);
+  for(;;){
+    // Scan through table looking for zombie children.
+    havekids = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->parent != proc)
+        continue;
+      havekids = 1;
+      if(p->state == ZOMBIE){
+        // Found one.
+        zpid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        freevm(p->pgdir);
+        p->state = UNUSED;
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        release(&ptable.lock);
+	if (status) &status = p->exitstat;
+        return zpid;
+      }
+    }
+
+    // No point waiting if we don't have any children.
+    if(!havekids || proc->killed){
+      status = -1;
+      release(&ptable.lock);
+      return -1;
+    }
+
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(proc, &ptable.lock);  //DOC: wait-sleep
+  }
+
+}
+
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -467,4 +511,17 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+void changepr(int pid, int priority)
+{
+  struct proc *p;   
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->pid == pid)
+      {
+         if(priority >= 0 && priority <= 63) p->priority = priority;
+         else p->priority = 63;
+         return;
+      }
+   return;
 }
