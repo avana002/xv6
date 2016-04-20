@@ -1753,5 +1753,5 @@ main(int argc, char *argv[])
   bigdir(); // slow
   exectest();
 
-  exit();
+  exit(0);
 }

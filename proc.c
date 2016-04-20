@@ -69,7 +69,7 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
-
+  p->priority = 63;
   return p;
 }
 
@@ -241,14 +241,17 @@ wait(int *status)
         p->name[0] = 0;
         p->killed = 0;
         release(&ptable.lock);
-	if (status) &status = p->exitstat;
+	if (status)
+        {
+             *status = p->exitstat;
+        }
         return pid;
       }
     }
 
     // No point waiting if we don't have any children.
     if(!havekids || proc->killed){
-      status = -1;
+      *status = -1;
       release(&ptable.lock);
       return -1;
     }
@@ -283,14 +286,14 @@ int waitpid (int pid, int* status, int options)
         p->name[0] = 0;
         p->killed = 0;
         release(&ptable.lock);
-	if (status) &status = p->exitstat;
+	if (status) *status = p->exitstat;
         return zpid;
       }
     }
 
     // No point waiting if we don't have any children.
     if(!havekids || proc->killed){
-      status = -1;
+      *status = -1;
       release(&ptable.lock);
       return -1;
     }
@@ -345,13 +348,13 @@ scheduler(void)
 
     //PRIORITY VERSION
     acquire(&ptable.lock);
-    next = NULL;
+    next = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     {
         if(p->state != RUNNABLE)
            continue;
 
-        if(next == NULL || p->priority < next->priority)
+        if(next == 0 || p->priority < next->priority)
            next = p;  
     }
 
@@ -539,7 +542,7 @@ procdump(void)
 void changepr(int pid, int priority)
 {
   struct proc *p;   
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
       if(p->pid == pid)
       {
          if(priority >= 0 && priority <= 63) p->priority = priority;

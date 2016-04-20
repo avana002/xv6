@@ -17,13 +17,13 @@ void
 sys_exit(int status)
 {
   exit(status);
-  return 0;  // not reached
+  return;  // not reached
 }
 
 int
-sys_wait(void)
+sys_wait(int* status)
 {
-  return wait();
+  return wait(status);
 }
 
 int

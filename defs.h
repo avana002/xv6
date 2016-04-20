@@ -115,7 +115,7 @@ void            scheduler(void) __attribute__((noreturn));
 void            sched(void);
 void            sleep(void*, struct spinlock*);
 void            userinit(void);
-int             wait(void);
+int             wait(int* status);
 void            wakeup(void*);
 void            yield(void);
 int		waitpid(int pid, int* status, int options);
