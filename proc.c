@@ -314,14 +314,17 @@ void
 scheduler(void)
 {
   struct proc *p;
+  struct proc *next;  
 
   for(;;){
     // Enable interrupts on this processor.
     sti();
-
+    
+    /* ORIGINAL CODE
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    {
       if(p->state != RUNNABLE)
         continue;
 
@@ -338,6 +341,26 @@ scheduler(void)
       // It should have changed its p->state before coming back.
       proc = 0;
     }
+    */
+
+    //PRIORITY VERSION
+    acquire(&ptable.lock);
+    next = NULL;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    {
+        if(p->state != RUNNABLE)
+           continue;
+
+        if(next == NULL || p->priority < next->priority)
+           next = p;  
+    }
+
+    proc = next;
+    switchuvm(next);
+    next->state = RUNNING;
+    swtch(&cpu->scheduler, proc->context);
+    switchkvm();    
+    proc = 0;
     release(&ptable.lock);
 
   }
