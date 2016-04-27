@@ -317,13 +317,13 @@ void
 scheduler(void)
 {
   struct proc *p;
-  struct proc *next;  
+ // struct proc *next;  
 
   for(;;){
     // Enable interrupts on this processor.
     sti();
     
-    /* ORIGINAL CODE
+    // ORIGINAL CODE
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -344,9 +344,9 @@ scheduler(void)
       // It should have changed its p->state before coming back.
       proc = 0;
     }
-    */
+    
 
-    //PRIORITY VERSION
+ /*   //PRIORITY VERSION
     acquire(&ptable.lock);
     next = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -364,7 +364,7 @@ scheduler(void)
     swtch(&cpu->scheduler, proc->context);
     switchkvm();    
     proc = 0;
-    release(&ptable.lock);
+   */ release(&ptable.lock);
 
   }
 }

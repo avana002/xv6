@@ -172,6 +172,10 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
+	_prio_test\
+	_prio_test2\
+	_wait_more\
+	_wait_one\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
