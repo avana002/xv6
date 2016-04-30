@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+//#include "spinlock.c"
 
 int
 sys_fork(void)
@@ -22,8 +23,11 @@ sys_exit(int status)
 
 int
 sys_wait(int* status)
-{
-  return wait(status);
+{ 
+  char* p;
+  argptr(0,&p,4);
+  int* s = (int*)p;
+  return wait(s);
 }
 
 int
@@ -93,7 +97,14 @@ sys_uptime(void)
 int
 sys_waitpid(int pid, int* status, int options)
 {
-  return waitpid(pid, status, options);
+  char* c;
+  argptr(1,&c,4);
+  int* s = (int*)c;
+  int p;
+  int o;
+  argint(0,&p);
+  argint(2,&o);
+  return waitpid(p, s, o);
 }
 
 void sys_changepr(int pid, int priority)

@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include <stdio.h>
 
 struct {
   struct spinlock lock;
@@ -241,17 +242,17 @@ wait(int *status)
         p->name[0] = 0;
         p->killed = 0;
         release(&ptable.lock);
-	if (status)
+	if (status != 0)
         {
-             *status = p->exitstat;
+            *status = p->exitstat;
         }
-        return pid;
+            return pid;
       }
     }
 
     // No point waiting if we don't have any children.
     if(!havekids || proc->killed){
-      *status = -1;
+ //     *status = -1;
       release(&ptable.lock);
       return -1;
     }
@@ -260,20 +261,29 @@ wait(int *status)
     sleep(proc, &ptable.lock);  //DOC: wait-sleep
   }
 }
-
+/*
+int wait(int* status)
+{
+	if (status == (int*)0x1010101) status = 0;
+	int temp = swait(status);
+	status = 0;
+	return temp;
+}
+*/
 int waitpid (int pid, int* status, int options)
 {
   struct proc *p;
-  int havekids, zpid;
+  int procexists, zpid;
 
   acquire(&ptable.lock);
   for(;;){
     // Scan through table looking for zombie children.
-    havekids = 0;
+    procexists = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->parent != proc)
+      //if(p->parent != proc)
+        if(p->pid != pid)
         continue;
-      havekids = 1;
+      procexists = 1;
       if(p->state == ZOMBIE){
         // Found one.
         zpid = p->pid;
@@ -286,14 +296,17 @@ int waitpid (int pid, int* status, int options)
         p->name[0] = 0;
         p->killed = 0;
         release(&ptable.lock);
-	if (status) *status = p->exitstat;
-        return zpid;
+	if (status != 0)
+	{
+	   *status = p->exitstat;
+        }
+	return zpid;
       }
     }
 
     // No point waiting if we don't have any children.
-    if(!havekids || proc->killed){
-      *status = -1;
+    if(!procexists || proc->killed){
+  //    *status = -1;
       release(&ptable.lock);
       return -1;
     }
@@ -301,7 +314,6 @@ int waitpid (int pid, int* status, int options)
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
     sleep(proc, &ptable.lock);  //DOC: wait-sleep
   }
-
 }
 
 
